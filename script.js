@@ -11,7 +11,7 @@
 (function() {
     'use strict';
 
-    const blockResourceURL = /^https?:\/\/cdn\.xiaolincoding\.com\/readmore\.js/;
+    const blockResourceURL = /readmore\.js/;
 
     window.addEventListener('beforescriptexecute', function(e) {
         let src = e.target.src;
