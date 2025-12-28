@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ReadmoreXiaolin
-// @version      2024-09-03
+// @version      2025-12-28
 // @description  Remove readmore @ xiaolincoding
 // @author       ZAMBAR
 // @match        https://xiaolincoding.com/*
@@ -11,23 +11,28 @@
 (function() {
     'use strict';
 
-    const blockResourceURL = /readmore\.js/;
+    const TARGET = "https://qiniu.techgrow.cn/readmore/dist/readmore.js";
 
-    window.addEventListener('beforescriptexecute', function(e) {
-        let src = e.target.src;
-        if (blockResourceURL.test(src)) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.target.remove();
+    // Patch script.src setter
+    const scriptProto = HTMLScriptElement.prototype;
+    const origSetter = scriptProto.__lookupSetter__('src');
+    Object.defineProperty(scriptProto, 'src', {
+        set(url) {
+            if (url === TARGET) {
+                console.warn("[TM Blocked Early] Script src:", url);
+                return;
+            }
+            return origSetter.call(this, url);
         }
+    });
 
-        let allowCopyAndPaste = function(e){
-          e.stopImmediatePropagation();
-          return true;
-        };
-        document.addEventListener('copy', allowCopyAndPaste, true);
-        document.addEventListener('paste', allowCopyAndPaste, true);
-        document.addEventListener('onpaste', allowCopyAndPaste, true);
-
-    }, true);
+    // Block script.createElement + setAttribute
+    const origSetAttr = scriptProto.setAttribute;
+    scriptProto.setAttribute = function(name, value) {
+        if (name === "src" && value === TARGET) {
+            console.warn("[TM Blocked Early] Script setAttribute:", value);
+            return;
+        }
+        return origSetAttr.apply(this, arguments);
+    };
 })();
